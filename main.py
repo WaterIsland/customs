@@ -3,10 +3,13 @@
 import time
 import multiprocessing as mltprcs
 
-from customs import cstmlogging as clog
-from customs import cstmthread  as cthrd
-from customs import cstmprocess as cprcs # need psutil
-from customs import cstmdb      as ctdb  # need pandas, pyodbc, sqlalchemy, urllib
+from customs import cstmlogging  as clog
+from customs import cstmthread   as cthrd
+from customs import cstmprocess  as cprcs # need psutil
+from customs import cstmdb       as cdb   # need pandas, pyodbc, sqlalchemy, urllib
+from customs import cstmfunction as ctfnc
+import customs
+
 
 '''
 def dummy():
@@ -30,15 +33,12 @@ def f0(logger=None):
     logger.info('hogehoge')
 
 
-def f1(func_name: str='f1', log_queue: mltprcs.Queue=None):
-    logger = clog.CustomLoggingForProcess.create_logger_for_multiprocess(log_queue)
-    try:
-        if (logger is None):
-            raise Exception('No logger instance.')
+#def f1(logger=None, func_name: str='f1'):
+def f1(*args):
+    logger    = args[0][0]
+    func_name = args[0][1]
+    logger.info('f1: logger: {}, func_name: {}'.format(logger, func_name))
 
-    except Exception as e:
-        return -1
-    
     show_str = 'Start {} as {}'.format(sys._getframe().f_code.co_name, func_name)
     logger.info(show_str)
     print(show_str)
@@ -54,15 +54,13 @@ def f1(func_name: str='f1', log_queue: mltprcs.Queue=None):
     f0(logger)
 
 
-def f2(func_name: str='f2', cnt: int = 1, log_queue: mltprcs.Queue=None):
-    logger = clog.CustomLoggingForProcess.create_logger_for_multiprocess(log_queue)
-    try:
-        if (logger is None):
-            raise Exception('No logger instance.')
+#def f2(logger=None, func_name: str='f2', cnt: int = 1):
+def f2(*args):
+    logger    = args[0][0]
+    func_name = args[0][1]
+    cnt       = args[0][2]
+    logger.info('f2: logger: {}, func_name: {}, cnt: {}'.format(logger, func_name, cnt))
 
-    except Exception as e:
-        return -1
-    
     show_str = 'Start {} as {}'.format(sys._getframe().f_code.co_name, func_name)
     logger.info(show_str)
     print(func_name, show_str)
@@ -86,14 +84,14 @@ def main():
     manager_obj = cprcs.MultiProcessManager(accuracy=1, cpu_rate=0.5, logger=logger_root)
 
     process_pool = {
-          'f10': {'function': f1, 'args': ('f10', logger_leaf.get_queue()), 'timeout': 10, 'priority': random.randint(0, 100)}
-        , 'f11': {'function': f1, 'args': ('f11', logger_leaf.get_queue()), 'timeout': 10, 'priority': random.randint(0, 100)}
-        , 'f12': {'function': f1, 'args': ('f12', logger_leaf.get_queue()), 'timeout': 10, 'priority': random.randint(0, 100)}
-        , 'f13': {'function': f1, 'args': ('f13', logger_leaf.get_queue()), 'timeout': 10, 'priority': random.randint(0, 100)}
-        , 'f20': {'function': f2, 'args': ('f20', 3, logger_leaf.get_queue()), 'timeout': 10, 'priority': random.randint(0, 100)}
-        , 'f21': {'function': f2, 'args': ('f21', 3, logger_leaf.get_queue()), 'timeout': 10, 'priority': random.randint(0, 100)}
-        , 'f22': {'function': f2, 'args': ('f22', 3, logger_leaf.get_queue()), 'timeout': 10, 'priority': random.randint(0, 100)}
-        , 'f23': {'function': f2, 'args': ('f23', 3, logger_leaf.get_queue()), 'timeout': 10, 'priority': random.randint(0, 100)}
+          'f10': {'function': ctfnc.call_multiprocess_wrapper, 'args': (f1, logger_leaf.get_queue(), 'f10'), 'timeout': 10, 'priority': random.randint(0, 100)}
+        , 'f11': {'function': ctfnc.call_multiprocess_wrapper, 'args': (f1, logger_leaf.get_queue(), 'f11'), 'timeout': 10, 'priority': random.randint(0, 100)}
+        , 'f12': {'function': ctfnc.call_multiprocess_wrapper, 'args': (f1, logger_leaf.get_queue(), 'f12'), 'timeout': 10, 'priority': random.randint(0, 100)}
+        , 'f13': {'function': ctfnc.call_multiprocess_wrapper, 'args': (f1, logger_leaf.get_queue(), 'f13'), 'timeout': 10, 'priority': random.randint(0, 100)}
+        , 'f20': {'function': ctfnc.call_multiprocess_wrapper, 'args': (f2, logger_leaf.get_queue(), 'f20', 3), 'timeout': 10, 'priority': random.randint(0, 100)}
+        , 'f21': {'function': ctfnc.call_multiprocess_wrapper, 'args': (f2, logger_leaf.get_queue(), 'f21', 3), 'timeout': 10, 'priority': random.randint(0, 100)}
+        , 'f22': {'function': ctfnc.call_multiprocess_wrapper, 'args': (f2, logger_leaf.get_queue(), 'f22', 3), 'timeout': 10, 'priority': random.randint(0, 100)}
+        , 'f23': {'function': ctfnc.call_multiprocess_wrapper, 'args': (f2, logger_leaf.get_queue(), 'f23', 3), 'timeout': 10, 'priority': random.randint(0, 100)}
     }
 
     logger_root.info('Start multiprocess _/_/_/_/_/_/_/_/_/_/')
@@ -118,6 +116,7 @@ def main():
     # Create inpector process
     logger_root.info('Created inspector processes ----------')
     inspector_obj = cprcs.StoppableProcess(target=cprcs.MultiProcessManager.run, name='MultiProcessManager.run', timeout=5)
+#    inspector_obj = cprcs.StoppableProcess(target=cprcs.MultiProcessManager.run, name='MultiProcessManager.run', timeout=20)
     manager_obj.set_inspector(inspector_obj)
     logger_root.info('Launch multiprocess ----------')
 
