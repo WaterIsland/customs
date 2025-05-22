@@ -26,6 +26,10 @@ db_obj = ctdb.CustomDB(logger=log_obj)
 import sys
 
 
+def f0(logger=None):
+    logger.info('hogehoge')
+
+
 def f1(func_name: str='f1', log_queue: mltprcs.Queue=None):
     logger = clog.CustomLoggingForProcess.create_logger_for_multiprocess(log_queue)
     try:
@@ -46,6 +50,8 @@ def f1(func_name: str='f1', log_queue: mltprcs.Queue=None):
     show_str = 'End '+ sys._getframe().f_code.co_name
     logger.info(show_str)
     print(show_str)
+
+    f0(logger)
 
 
 def f2(func_name: str='f2', cnt: int = 1, log_queue: mltprcs.Queue=None):
@@ -69,6 +75,8 @@ def f2(func_name: str='f2', cnt: int = 1, log_queue: mltprcs.Queue=None):
     logger.info(show_str)
     print(func_name, show_str)
 
+    f0(logger)
+
 
 def main():
     import random
@@ -77,21 +85,30 @@ def main():
     logger_leaf = clog.CustomLoggingForProcess(file_name='log\\test_leaf.log')
     manager_obj = cprcs.MultiProcessManager(accuracy=1, cpu_rate=0.5, logger=logger_root)
 
+    process_pool = {
+          'f10': {'function': f1, 'args': ('f10', logger_leaf.get_queue()), 'timeout': 10, 'priority': random.randint(0, 100)}
+        , 'f11': {'function': f1, 'args': ('f11', logger_leaf.get_queue()), 'timeout': 10, 'priority': random.randint(0, 100)}
+        , 'f12': {'function': f1, 'args': ('f12', logger_leaf.get_queue()), 'timeout': 10, 'priority': random.randint(0, 100)}
+        , 'f13': {'function': f1, 'args': ('f13', logger_leaf.get_queue()), 'timeout': 10, 'priority': random.randint(0, 100)}
+        , 'f20': {'function': f2, 'args': ('f20', 3, logger_leaf.get_queue()), 'timeout': 10, 'priority': random.randint(0, 100)}
+        , 'f21': {'function': f2, 'args': ('f21', 3, logger_leaf.get_queue()), 'timeout': 10, 'priority': random.randint(0, 100)}
+        , 'f22': {'function': f2, 'args': ('f22', 3, logger_leaf.get_queue()), 'timeout': 10, 'priority': random.randint(0, 100)}
+        , 'f23': {'function': f2, 'args': ('f23', 3, logger_leaf.get_queue()), 'timeout': 10, 'priority': random.randint(0, 100)}
+    }
+
     logger_root.info('Start multiprocess _/_/_/_/_/_/_/_/_/_/')
     # Create worker processes
     logger_root.info('Created worker processes ----------')
     workers = []
-    for idx in range(4):
-        name = 'f1'+str(idx)
-        pr_obj = cprcs.StoppableProcess(target=f1, name=name, timeout=10, priority=random.randint(0, 100), args=(name, logger_leaf.get_queue()))
-         # workers format: [instance_name as string, instance as object, priority as int]
-        workers.append([name, pr_obj, pr_obj.get_priority()])
-
-    for idx in range(4):
-        name = 'f2'+str(idx)
-        pr_obj = cprcs.StoppableProcess(target=f2, name=name, timeout=10, priority=random.randint(0, 100), args=(name, 3, logger_leaf.get_queue()))
-        # workers format: [instance_name as string, instance as object, priority as int]
-        workers.append([name, pr_obj, pr_obj.get_priority()])
+    for r_key, r_val in process_pool.items():
+        pr_obj = cprcs.StoppableProcess(
+              target   = r_val['function']
+            , name     = r_key
+            , timeout  = r_val['timeout']
+            , priority = r_val['priority']
+            , args     = r_val['args']
+        )
+        workers.append([r_key, pr_obj, r_val['priority']])
     manager_obj.set_workers(workers)
 
     logger_root.info('Sorted worker processes queue ----------')
@@ -117,5 +134,4 @@ def main():
 
 if __name__ == '__main__':
     main()
-else:
-    print(__name__)
+

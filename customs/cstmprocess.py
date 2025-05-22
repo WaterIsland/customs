@@ -160,4 +160,6 @@ class MultiProcessManager():
     def rm_worker(self):
         pass
 
-
+    @staticmethod
+    def call_multiprocess_wrapper():
+        pass
