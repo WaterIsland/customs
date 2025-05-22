@@ -131,17 +131,10 @@ class CustomLoggingForProcess(multiprocessing.Process):
         while True:
             logger.handle(self.get_queue().get())
 
-    def worker(logger=None):
+    def worker(self, logger=None):
         for i in range(3):
             logger.info("message #{}".format(i))
 
-    @staticmethod
-    def create_logger_for_multiprocess(log_queue: multiprocessing.Queue=None):
-        logger = logging.getLogger(__file__)
-        handler = logging.handlers.QueueHandler(log_queue)
-        logger.addHandler(handler)
-        logger.setLevel(logging.DEBUG)
-        return logger
 
 if __name__ == '__main__':
     import time

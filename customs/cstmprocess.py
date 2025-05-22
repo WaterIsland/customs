@@ -2,8 +2,10 @@
 # Created on 2025/05/01
 import multiprocessing
 import time
-import cstmlogging as clog
+import logging
 import psutil
+
+import cstmlogging as clog
 
 
 #####
@@ -160,6 +162,3 @@ class MultiProcessManager():
     def rm_worker(self):
         pass
 
-    @staticmethod
-    def call_multiprocess_wrapper():
-        pass
