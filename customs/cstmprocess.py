@@ -64,6 +64,9 @@ class MultiProcessManager():
 
     def __launch_new_process(self, pool, idx=-1):
         try:
+            print('at __launch_new_process, pool: {}'.format(pool))
+            self.__logger.info('at __launch_new_process, pool: {}'.format(pool))
+            self.__logger.info('at __launch_new_process, self.__workers: {}'.format(self.__workers))
             launch = self.__workers.pop()
             #pool.append(launch)
             pool.insert(idx, launch)
@@ -139,7 +142,8 @@ class MultiProcessManager():
     #
     def set_workers(self, workers=[]):
         # Sort by priority as ASC
-        workers = sorted(workers, key=lambda x:x[2])
+        #workers = sorted(workers, key=lambda x:x[2])
+        sorted(workers, key=lambda x:x[2])
         self.__workers = workers
 
     def get_workers(self):
@@ -148,16 +152,20 @@ class MultiProcessManager():
     def add_workers(self, workers=[]):
         for worker in workers: self.__workers.append(worker)
         # Sort by priority as ASC
-        self.__workers = sorted(self.__workers, key=lambda x:x[2])
+        #self.__workers = sorted(self.__workers, key=lambda x:x[2])
+        sorted(self.__workers, key=lambda x:x[2])
 
     def rm_workers(self):
         pass
 
-    def set_worker(self):
-        pass
+    def set_worker(self, worker=None):
+        self.__workers = worker
 
-    def add_worker(self):
-        pass
+    def add_worker(self, worker=None):
+        self.__workers.append(worker)
+        # Sort by priority as ASC
+        self.__workers = sorted(self.__workers, key=lambda x:x[2])
+        sorted(self.__workers, key=lambda x:x[2])
 
     def rm_worker(self):
         pass

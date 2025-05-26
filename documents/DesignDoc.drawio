@@ -1,0 +1,22 @@
+<mxfile host="65bd71144e">
+    <diagram id="mIagt63I06Lc-kJmO3cE" name="ページ1">
+        <mxGraphModel dx="1075" dy="617" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" background="none" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="3" value="sequenceDiagram&#xa;participant main&#xa;participant CustomLogging&#xa;participant CustomLoggingForProcess&#xa;participant StoppableProcess&#xa;participant MultiProcessManager&#xa;&#xa;main -&gt;&gt; CustomLogging: create instance&#xa;CustomLogging -&gt;&gt; main: &#xa;&#xa;main -&gt;&gt; CustomLoggingForProcess: create queue&#xa;CustomLoggingForProcess -&gt;&gt; main: &#xa;&#xa;main -&gt;&gt; StoppableProcess: register instances as worker and set CustomLoggingForProcess queue&#xa;StoppableProcess -&gt;&gt; main: &#xa;&#xa;main -&gt;&gt; MultiProcessManager: register StoppableProcess worker(s)&#xa;MultiProcessManager -&gt;&gt; main: &#xa;&#xa;main -&gt;&gt; MultiProcessManager: run()&#xa;MultiProcessManager -&gt;&gt; StoppableProcess: call function(s)&#xa;MultiProcessManager -&gt;&gt; main: finish by timeout&#xa;" style="shadow=0;dashed=0;align=left;strokeWidth=1;shape=mxgraph.mermaid.abstract.mermaid;labelBackgroundColor=#ffffff;noLabel=1;theme=default;" parent="1" vertex="1">
+                    <mxGeometry x="42" y="50" width="870" height="470" as="geometry"/>
+                </mxCell>
+                <mxCell id="4" value="sequenceDiagram&#xa;participant main&#xa;participant CustomLogging&#xa;participant CustomLoggingForProcess&#xa;participant StoppableProcess&#xa;participant MultiProcessManager&#xa;participant MultiProcessDispatcher&#xa;&#xa;main -&gt;&gt; CustomLogging: create instance&#xa;CustomLogging -&gt;&gt; main: &#xa;&#xa;main -&gt;&gt; CustomLoggingForProcess: create queue&#xa;CustomLoggingForProcess -&gt;&gt; main: &#xa;&#xa;main -&gt;&gt; StoppableProcess: register instances as worker and set CustomLoggingForProcess queue&#xa;StoppableProcess -&gt;&gt; main: &#xa;&#xa;main -&gt;&gt; MultiProcessManager: register StoppableProcess worker(s)&#xa;MultiProcessManager -&gt;&gt; main: &#xa;&#xa;main -&gt;&gt; MultiProcessManager: run()&#xa;main -&gt;&gt; MultiProcessDispatcher: run()&#xa;&#xa;loop process dispathcer&#xa;  MultiProcessDispatcher --&gt;&gt; StoppableProcess: create process(es)&#xa;  StoppableProcess --&gt;&gt; MultiProcessDispatcher: &#xa;    MultiProcessDispatcher --&gt;&gt; MultiProcessManager : dispatch process(es)&#xa;      MultiProcessManager -&gt;&gt; StoppableProcess: call function(s) from dispatcher&#xa;      StoppableProcess -&gt;&gt; MultiProcessManager: &#xa;end&#xa;Note left of MultiProcessDispatcher: continuously&#xa;&#xa;      MultiProcessManager -&gt;&gt; StoppableProcess: call function(s) from worker(s)&#xa;      StoppableProcess -&gt;&gt; MultiProcessManager: &#xa;&#xa;loop process dispathcer&#xa;  MultiProcessDispatcher --&gt;&gt; StoppableProcess: create process(es)&#xa;  StoppableProcess --&gt;&gt; MultiProcessDispatcher: &#xa;    MultiProcessDispatcher --&gt;&gt; MultiProcessManager : dispatch process(es)&#xa;      MultiProcessManager -&gt;&gt; StoppableProcess: call function(s) from dispatcher&#xa;      StoppableProcess -&gt;&gt; MultiProcessManager: &#xa;end&#xa;Note left of MultiProcessDispatcher: continuously&#xa;&#xa;&#xa;MultiProcessManager -&gt;&gt; main: finish by timeout&#xa;" style="shadow=0;dashed=0;align=left;strokeWidth=1;shape=mxgraph.mermaid.abstract.mermaid;labelBackgroundColor=#ffffff;noLabel=1;theme=default;" vertex="1" parent="1">
+                    <mxGeometry x="40" y="560" width="1201" height="1067" as="geometry"/>
+                </mxCell>
+                <mxCell id="7" value="Is" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+                    <mxGeometry x="42" y="12" width="27" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="8" value="Will" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+                    <mxGeometry x="24" y="523" width="37" height="26" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>
