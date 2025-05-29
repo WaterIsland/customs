@@ -90,10 +90,13 @@ class CustomLoggingForProcess(multiprocessing.Process):
         )
         self.__trfl_handler.setFormatter(file_formattar)
         self.__logger.addHandler(self.__trfl_handler)
-        self.__queue = multiprocessing.Manager().Queue()
+        #self.__queue = multiprocessing.Manager().Queue()
+        self.__queue = multiprocessing.Queue()
         self.__listener = logging.handlers.QueueListener(self.__queue, self.__trfl_handler)
 
         self.__logger.addHandler(self.__trfl_handler)
+
+    #def put_nowait(self, item): self.__queue.put_nowait(item)
 
     def start_logging(self): self.__listener.start()
     def stop_logging(self) : self.__listener.stop()
@@ -130,10 +133,6 @@ class CustomLoggingForProcess(multiprocessing.Process):
     def listener(self, logger=None):
         while True:
             logger.handle(self.get_queue().get())
-
-    def worker(self, logger=None):
-        for i in range(3):
-            logger.info("message #{}".format(i))
 
 
 if __name__ == '__main__':

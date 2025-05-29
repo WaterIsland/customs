@@ -2,10 +2,9 @@
 # Created on 2025/05/01
 import multiprocessing
 import time
-import logging
 import psutil
-
-import cstmlogging as clog
+import inspect
+import queue
 
 
 #####
@@ -53,24 +52,28 @@ class StoppableProcess(multiprocessing.Process):
     
 
 class MultiProcessManager():
-    def __init__(self, accuracy=0.05, cpu_rate=0.5, logger=None): 
+#    def __init__(self, accuracy=0.05, cpu_rate=0.5, queue=None): 
+    def __init__(self, accuracy=0.05, cpu_rate=0.5, logger=None, queue=None): 
         if (logger is None): raise Exception('[Exception] Please set logging instance.')
         self.__physical_cpu_core = int(psutil.cpu_count(logical=False)*cpu_rate)
         self.__logical_cpu_core  = int(psutil.cpu_count(logical=True)*cpu_rate)
         self.__accuracy = accuracy
         self.__logger   = logger
-        self.__workers  = {}
+        self.__workers  = []
+        self.__queue    = queue
         self.__logger.info('Success to init. ::: {}'.format(self.__class__.__name__))
 
     def __launch_new_process(self, pool, idx=-1):
         try:
             print('at __launch_new_process, pool: {}'.format(pool))
+            print('at __launch_new_process, pool: {}'.format(self.__workers))
             self.__logger.info('at __launch_new_process, pool: {}'.format(pool))
             self.__logger.info('at __launch_new_process, self.__workers: {}'.format(self.__workers))
             launch = self.__workers.pop()
             #pool.append(launch)
             pool.insert(idx, launch)
             launch[1].start()
+            print('Launch worker : {}'.format(launch))
             self.__logger.info('Launch worker : {}'.format(launch))
         except Exception as e:
             self.__logger.error('No worker processes : {}'.format(e))
@@ -94,32 +97,66 @@ class MultiProcessManager():
         start_time = time.perf_counter()
         while(True):
             time.sleep(self.__accuracy)
-            #time.sleep(1)
+
             end_time = time.perf_counter()
             diff_time = end_time - start_time
-            self.__logger.debug(f'Process execution time: {diff_time:.4f} seconds')
             print(f'Process execution time: {diff_time:.4f} seconds')
+            self.__logger.debug(f'Process execution time: {diff_time:.4f} seconds')
 
             # Find had finished process
             finished = []
             for idx, ins in enumerate(pool):
-                self.__logger.debug('name: {}, is_alive: {}'.format(ins[1].get_name(), ins[1].is_alive()))
                 print('name: {}, is_alive: {}'.format(ins[1].get_name(), ins[1].is_alive()))
+                self.__logger.debug('name: {}, is_alive: {}'.format(ins[1].get_name(), ins[1].is_alive()))
                 if (ins[1].is_alive() is False):
                     ins[1].join()
                     finished.append(idx)
             
             # Remove had finished process and Launch new one
             for idx in finished:
-                self.__logger.debug('Pop ==> name: {}, is_alive: {}'.format(pool[idx][1].get_name(), pool[idx][1].is_alive()))
                 print('Pop ==> name: {}, is_alive: {}'.format(pool[idx][1].get_name(), pool[idx][1].is_alive()))
+                self.__logger.debug('Pop ==> name: {}, is_alive: {}'.format(pool[idx][1].get_name(), pool[idx][1].is_alive()))
                 pool.pop(idx) # Remove
                 ret = self.__launch_new_process(pool, idx)
                 if (ret < 0): break # No worker processes
 
+            # Insert new process to empty queue
+            if (len(pool) < self.__physical_cpu_core):
+                cnt_of_empty = self.__physical_cpu_core - len(pool)
+                for cnt in range(cnt_of_empty): self.__launch_new_process(pool, len(pool)+cnt-1)
+
             # Finish oneselves
             if (diff_time >= self.__inspector.get_timeout()):
-                break        
+                break
+            
+            try:
+                # get data from manager Queue
+                from_val = self.__queue.get(timeout=5) # From:run_dispatcher
+                to_val   = self.__queue.get(timeout=5) # To:MultiProcessManager.run                        
+                tmp_ary = []
+                if (from_val.split(':')[1] == 'run_dispatcher') and (to_val.split(':')[1] == 'MultiProcessManager.run'):
+                    noarg    = self.__queue.get() # number of argument
+                    for cnt in range(noarg): 
+                        tmp_queue_item = self.__queue.get()
+                        tmp_ary.append(tmp_queue_item) # [r_key, pr_obj, priority]
+                    print('********** tmp_ary: {}'.format(tmp_ary))
+                else:
+                    # restore queue
+                    pass
+                
+                # generate process
+                pr_obj = StoppableProcess(
+                      target   = tmp_ary[0] # r_val['function']
+                    , name     = tmp_ary[1] # r_key
+                    , timeout  = tmp_ary[2] # r_val['timeout']
+                    , priority = tmp_ary[3] # r_val['priority']
+                    , args     = (tmp_ary[4:]) # r_val['args']
+                )
+                print('********** add worker: {}'.format(pr_obj))
+                self.add_worker([tmp_ary[1], pr_obj, tmp_ary[3]])
+
+            except queue.Empty as e:
+                print('Shared Queue is empty... go next loop...')
 
         # Terminate aliving processes
         self.__logger.info('Final check ----------')
@@ -129,7 +166,6 @@ class MultiProcessManager():
                 ins[1].join()
             self.__logger.info('name: {}, is_alive: {}'.format(ins[1].get_name(), ins[1].is_alive()))
 
-        time.sleep(1)
         self.__logger.info('Terminated check ----------')
         for ins in pool:
             self.__logger.info('name: {}, is_alive: {}'.format(ins[1].get_name(), ins[1].is_alive()))
@@ -145,6 +181,7 @@ class MultiProcessManager():
         #workers = sorted(workers, key=lambda x:x[2])
         sorted(workers, key=lambda x:x[2])
         self.__workers = workers
+        print('[{}] self.__workers: {}'.format(inspect.currentframe().f_code.co_name, self.__workers))
 
     def get_workers(self):
         return self.__workers
@@ -154,6 +191,7 @@ class MultiProcessManager():
         # Sort by priority as ASC
         #self.__workers = sorted(self.__workers, key=lambda x:x[2])
         sorted(self.__workers, key=lambda x:x[2])
+        print('[{}] self.__workers: {}'.format(inspect.currentframe().f_code.co_name, self.__workers))
 
     def rm_workers(self):
         pass
@@ -166,6 +204,7 @@ class MultiProcessManager():
         # Sort by priority as ASC
         self.__workers = sorted(self.__workers, key=lambda x:x[2])
         sorted(self.__workers, key=lambda x:x[2])
+        print('[{}] self.__workers: {}'.format(inspect.currentframe().f_code.co_name, self.__workers))
 
     def rm_worker(self):
         pass
