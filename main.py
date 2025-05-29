@@ -9,24 +9,29 @@ from customs import cstmprocess  as cprcs # need psutil
 from customs import cstmfunction as cfnc
 
 
+ROOT_LOG_PATH       = 'log\\test_root.log'
+PROCESS_LOG_PATH    = 'log\\test_leaf_process.log'
+DISPATCHER_LOG_PATH = 'log\\test_leaf_dispatcher.log'
+
+
 if __name__ == '__main__':
     with mltprcs.Manager() as manager:
         shrd_queue = manager.Queue()
 
-        logger_root = clog.CustomLogging(file_name='log\\test_root.log')
-        logger_leaf = clog.CustomLoggingForProcess(file_name='log\\test_leaf.log')
+        logger_root = clog.CustomLogging(file_name=ROOT_LOG_PATH)
+        logger_leaf = clog.CustomLoggingForProcess(file_name=PROCESS_LOG_PATH)
 
         logger_leaf.start_logging()
         try:
             manager_obj = cprcs.MultiProcessManager(accuracy=1, cpu_rate=0.5, logger=logger_root, queue=shrd_queue)
-            cfnc.set_workers(manager_obj, logger_root, logger_leaf, shrd_queue)
+            cfnc.set_initial_workers(manager_obj, logger_root, PROCESS_LOG_PATH, DISPATCHER_LOG_PATH, shrd_queue)
 
             # Create inpector process
             logger_root.info('Created inspector processes ----------')
 #            inspector_obj = cprcs.StoppableProcess(target=cprcs.MultiProcessManager.run, name='MultiProcessManager.run', timeout=1)
-#            inspector_obj = cprcs.StoppableProcess(target=cprcs.MultiProcessManager.run, name='MultiProcessManager.run', timeout=5)
+            inspector_obj = cprcs.StoppableProcess(target=cprcs.MultiProcessManager.run, name='MultiProcessManager.run', timeout=5)
 #            inspector_obj = cprcs.StoppableProcess(target=cprcs.MultiProcessManager.run, name='MultiProcessManager.run', timeout=10)
-            inspector_obj = cprcs.StoppableProcess(target=cprcs.MultiProcessManager.run, name='MultiProcessManager.run', timeout=20)
+#            inspector_obj = cprcs.StoppableProcess(target=cprcs.MultiProcessManager.run, name='MultiProcessManager.run', timeout=20)
 
             manager_obj.set_inspector(inspector_obj)
             logger_root.info('Launch multiprocess ----------')

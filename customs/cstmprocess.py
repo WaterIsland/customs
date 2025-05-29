@@ -52,7 +52,6 @@ class StoppableProcess(multiprocessing.Process):
     
 
 class MultiProcessManager():
-#    def __init__(self, accuracy=0.05, cpu_rate=0.5, queue=None): 
     def __init__(self, accuracy=0.05, cpu_rate=0.5, logger=None, queue=None): 
         if (logger is None): raise Exception('[Exception] Please set logging instance.')
         self.__physical_cpu_core = int(psutil.cpu_count(logical=False)*cpu_rate)
@@ -131,32 +130,33 @@ class MultiProcessManager():
             
             try:
                 # get data from manager Queue
-                from_val = self.__queue.get(timeout=5) # From:run_dispatcher
-                to_val   = self.__queue.get(timeout=5) # To:MultiProcessManager.run                        
+                get_items = self.__queue.get(timeout=5)
+                print('********** get_items : {}'.format(get_items))
+                self.__logger.debug('********** get_items : {}'.format(get_items))
+
+                from_val = get_items['from'] # From:run_dispatcher
+                to_val   = get_items['to'] # To:MultiProcessManager.run                        
                 tmp_ary = []
-                if (from_val.split(':')[1] == 'run_dispatcher') and (to_val.split(':')[1] == 'MultiProcessManager.run'):
-                    noarg    = self.__queue.get() # number of argument
-                    for cnt in range(noarg): 
-                        tmp_queue_item = self.__queue.get()
-                        tmp_ary.append(tmp_queue_item) # [r_key, pr_obj, priority]
-                    print('********** tmp_ary: {}'.format(tmp_ary))
+                if (from_val == 'run_dispatcher') and (to_val == 'MultiProcessManager.run'):
+                    # generate process
+                    pr_obj = StoppableProcess(
+                          target   = get_items['function'] # r_val['function']
+                        , name     = get_items['key']      # r_val['key']
+                        , timeout  = get_items['timeout']  # r_val['timeout']
+                        , priority = get_items['priority'] # r_val['priority']
+                        , args     = (get_items['args'])   # r_val['args']
+                    )
+                    print('********** add worker: {}'.format(pr_obj))
+                    self.__logger.debug('********** add worker: {}'.format(pr_obj))
+                    self.add_worker([get_items['key'], pr_obj, get_items['priority']])
+                    
                 else:
-                    # restore queue
+                    # self.__queue.put(get_items, timeout=1) # restore queue?
                     pass
-                
-                # generate process
-                pr_obj = StoppableProcess(
-                      target   = tmp_ary[0] # r_val['function']
-                    , name     = tmp_ary[1] # r_key
-                    , timeout  = tmp_ary[2] # r_val['timeout']
-                    , priority = tmp_ary[3] # r_val['priority']
-                    , args     = (tmp_ary[4:]) # r_val['args']
-                )
-                print('********** add worker: {}'.format(pr_obj))
-                self.add_worker([tmp_ary[1], pr_obj, tmp_ary[3]])
 
             except queue.Empty as e:
                 print('Shared Queue is empty... go next loop...')
+                self.__logger.error('Shared Queue is empty... go next loop...')
 
         # Terminate aliving processes
         self.__logger.info('Final check ----------')
