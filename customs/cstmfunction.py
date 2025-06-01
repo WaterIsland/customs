@@ -20,24 +20,6 @@ def create_logger_for_multiprocess(log_queue: mltprcs.Queue=None):
     return logger
 
 
-def call_multiprocess_wrapper(function=None, log_queue: mltprcs.Queue=None, *args):
-    logger = create_logger_for_multiprocess(log_queue)
-    try:
-        if (logger is None):
-            raise Exception('No logger instance.')
-
-    except Exception as e:
-        return -1
-
-    # create arguments
-    arg_list = [logger]
-    for item in args:
-        arg_list.append(item)
-    logger.info('arg_list: {}'.format(arg_list))
-    
-    function(arg_list) # call multiprocess function
-
-
 def f1(*args):
     log_fname = args[0]
     func_name = args[1]

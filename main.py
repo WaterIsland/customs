@@ -23,8 +23,18 @@ if __name__ == '__main__':
 
         logger_leaf.start_logging()
         try:
-            manager_obj = cprcs.MultiProcessManager(accuracy=1, cpu_rate=0.5, logger=logger_root, queue=shrd_queue)
-            cfnc.set_initial_workers(manager_obj, logger_root, PROCESS_LOG_PATH, DISPATCHER_LOG_PATH, shrd_queue)
+            manager_obj = cprcs.MultiProcessManager(
+                  accuracy = 1
+                , cpu_rate = 0.5
+                , logger   = logger_root
+                , queue    = shrd_queue)
+            cfnc.set_initial_workers(
+                  manager_obj      = manager_obj
+                , logger_root      = logger_root
+                , process_log_path = PROCESS_LOG_PATH
+                , dispach_log_path = DISPATCHER_LOG_PATH
+                , shrd_queue       = shrd_queue
+            )
 
             # Create inpector process
             logger_root.info('Created inspector processes ----------')
@@ -44,5 +54,4 @@ if __name__ == '__main__':
             logger_leaf.stop_logging()
 
         logger_root.info('End multiprocess _/_/_/_/_/_/_/_/_/_/')
-
 
